@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, CheckCircle, Star, Users, Clock, Shield, Award, Zap } from 'lucide-react';
+import { ArrowRight, CheckCircle, Star, Clock, Shield, Award, Zap } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 
