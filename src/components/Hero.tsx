@@ -50,12 +50,24 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <img src="/images/logo.png" alt="Logo C&C Montagens" className="h-10 w-10" />
+              <img 
+                src="/images/logo.png" 
+                alt="C&C Montagens" 
+                className="h-12 w-12 object-contain"
+                onError={(e) => {
+                  // Fallback para quando a imagem não carregar
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg" style={{ display: 'none' }}>
+                <span className="text-white font-bold text-xl">C&C</span>
               </div>
               <div>
-                <span className="text-2xl font-bold text-gray-900">Você escolher,</span>
-                <div className="text-xs text-blue-600 font-medium">agente monta.</div>
+                <span className="text-2xl font-bold text-gray-900">C&C Montagens</span>
+                <div className="text-xs text-blue-600 font-medium">Você escolhe, a gente monta.</div>
               </div>
             </div>
             <Button onClick={onGetStarted} rightIcon={<ArrowRight className="h-4 w-4" />}>

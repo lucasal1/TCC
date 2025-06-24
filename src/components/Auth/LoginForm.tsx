@@ -57,10 +57,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
 
     try {
       if (isLogin) {
-        await login(formData.email, formData.password, userType);
+        await login(formData.email, formData.password);
       } else {
         await register({
           email: formData.email,
+          password: formData.password,
           name: formData.name,
           phone: formData.phone,
           type: userType
@@ -92,8 +93,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
           
           <div className="relative z-10">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <span className="text-white font-bold text-xl">C&C</span>
+              <div className="flex items-center justify-center mb-4">
+                <img 
+                  src="/images/logo.png" 
+                  alt="C&C Montagens" 
+                  className="h-16 w-16 object-contain"
+                  onError={(e) => {
+                    // Fallback para quando a imagem não carregar
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg" style={{ display: 'none' }}>
+                  <span className="text-white font-bold text-xl">C&C</span>
+                </div>
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
                 {isLogin ? 'Bem-vindo de volta!' : 'Criar sua conta'}
@@ -104,43 +119,45 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
             </div>
 
             {/* User Type Selection */}
-            <div className="mb-6">
-              <label className="text-sm font-medium text-gray-700 mb-3 block">
-                Tipo de Conta
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setUserType('client')}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                    userType === 'client'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="text-center">
-                    <User className="h-6 w-6 mx-auto mb-2" />
-                    <span className="text-sm font-medium">Cliente</span>
-                    <div className="text-xs text-gray-500 mt-1">Preciso de serviços</div>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUserType('assembler')}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                    userType === 'assembler'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="text-center">
-                    <User className="h-6 w-6 mx-auto mb-2" />
-                    <span className="text-sm font-medium">Montador</span>
-                    <div className="text-xs text-gray-500 mt-1">Ofereço serviços</div>
-                  </div>
-                </button>
+            {!isLogin && (
+              <div className="mb-6">
+                <label className="text-sm font-medium text-gray-700 mb-3 block">
+                  Tipo de Conta
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setUserType('client')}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      userType === 'client'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <User className="h-6 w-6 mx-auto mb-2" />
+                      <span className="text-sm font-medium">Cliente</span>
+                      <div className="text-xs text-gray-500 mt-1">Preciso de serviços</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUserType('assembler')}
+                    className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                      userType === 'assembler'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <User className="h-6 w-6 mx-auto mb-2" />
+                      <span className="text-sm font-medium">Montador</span>
+                      <div className="text-xs text-gray-500 mt-1">Ofereço serviços</div>
+                    </div>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {!isLogin && (
@@ -270,16 +287,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onBack }) => {
               >
                 ← Voltar à página inicial
               </button>
-            </div>
-
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
-              <p className="text-xs text-gray-700 mb-2 font-medium">🚀 Credenciais de demonstração:</p>
-              <div className="text-xs text-gray-600 space-y-1">
-                <div><strong>Cliente:</strong> cliente@email.com</div>
-                <div><strong>Montador:</strong> montador@email.com</div>
-                <div><strong>Senha:</strong> qualquer senha (mín. 6 caracteres)</div>
-              </div>
             </div>
           </div>
         </Card>

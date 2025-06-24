@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { LogOut, User, Bell, Menu, X, Hammer } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../hooks/useNotifications';
 import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
 import { Badge } from './ui/Badge';
+import { NotificationPanel } from './Notifications/NotificationPanel';
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
@@ -12,8 +14,9 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [notificationCount] = useState(3); // Mock notification count
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
 
   if (!user) return null;
 
@@ -31,7 +34,19 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+              <img 
+                src="/images/logo.png" 
+                alt="C&C Montagens" 
+                className="h-10 w-10 object-contain"
+                onError={(e) => {
+                  // Fallback para quando a imagem não carregar
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md" style={{ display: 'none' }}>
                 <Hammer className="h-5 w-5 text-white" />
               </div>
               <div className="hidden sm:block">
@@ -64,18 +79,26 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
           <div className="flex items-center space-x-4">
             {/* Notifications */}
             <div className="relative">
-              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+              <button 
+                onClick={() => setIsNotificationPanelOpen(!isNotificationPanelOpen)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              >
                 <Bell className="h-5 w-5" />
-                {notificationCount > 0 && (
+                {unreadCount > 0 && (
                   <Badge 
                     variant="error" 
                     size="sm" 
                     className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 flex items-center justify-center text-xs"
                   >
-                    {notificationCount}
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </Badge>
                 )}
               </button>
+              
+              <NotificationPanel 
+                isOpen={isNotificationPanelOpen}
+                onClose={() => setIsNotificationPanelOpen(false)}
+              />
             </div>
 
             {/* User Info */}

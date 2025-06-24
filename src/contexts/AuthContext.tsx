@@ -1,197 +1,191 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User as SupabaseUser } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 import { User, Client, Assembler } from '../types';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import toast from 'react-hot-toast';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, userType: 'client' | 'assembler') => Promise<void>;
+  supabaseUser: SupabaseUser | null;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (userData: Partial<User>) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   updateProfile: (userData: Partial<User>) => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
 
+interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  type: 'client' | 'assembler';
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Enhanced mock data with more realistic information
-const mockUsers: (Client | Assembler)[] = [
-  {
-    id: '1',
-    email: 'cliente@email.com',
-    name: 'João Silva',
-    phone: '(11) 99999-9999',
-    type: 'client',
-    avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150',
-    isVerified: true,
-    createdAt: new Date('2023-06-15'),
-    lastLoginAt: new Date(),
-    status: 'active',
-    addresses: [
-      {
-        id: '1',
-        street: 'Rua das Flores',
-        number: '123',
-        neighborhood: 'Vila Madalena',
-        city: 'São Paulo',
-        state: 'SP',
-        zipCode: '01234-567',
-        coordinates: { lat: -23.5505, lng: -46.6333 },
-        isDefault: true
-      }
-    ],
-    bookings: [],
-    reviews: [],
-    preferences: {
-      preferredTimeSlots: ['14:00 - 16:00', '16:00 - 18:00'],
-      communicationMethod: 'whatsapp',
-      notifications: {
-        booking: true,
-        reminders: true,
-        promotions: false
-      }
-    },
-    totalSpent: 1250,
-    loyaltyPoints: 125
-  },
-  {
-    id: '2',
-    email: 'montador@email.com',
-    name: 'Carlos Mendes',
-    phone: '(11) 88888-8888',
-    type: 'assembler',
-    avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150',
-    isVerified: true,
-    createdAt: new Date('2022-03-10'),
-    lastLoginAt: new Date(),
-    status: 'active',
-    specialties: ['Cozinhas Planejadas', 'Guarda-roupas', 'Móveis de Escritório'],
-    experience: 8,
-    rating: 4.9,
-    totalJobs: 247,
-    hourlyRate: 55,
-    serviceArea: {
-      cities: ['São Paulo', 'Osasco', 'Barueri'],
-      maxDistance: 25,
-      travelFee: 15
-    },
-    certifications: [
-      {
-        id: '1',
-        name: 'Montador Certificado SENAI',
-        issuer: 'SENAI-SP',
-        issuedAt: new Date('2020-05-15'),
-        expiresAt: new Date('2025-05-15')
-      }
-    ],
-    responseTime: 45,
-    completionRate: 98.5,
-    earnings: {
-      thisMonth: 4200,
-      lastMonth: 3800,
-      total: 89500,
-      pending: 650
-    },
-    portfolio: [
-      {
-        id: '1',
-        title: 'Cozinha Planejada Completa - Residencial Alto Padrão',
-        description: 'Montagem completa de cozinha planejada com 18 módulos, incluindo ilha central, adega e sistema de iluminação LED integrado.',
-        images: [
-          'https://images.pexels.com/photos/1080721/pexels-photo-1080721.jpeg?auto=compress&cs=tinysrgb&w=800',
-          'https://images.pexels.com/photos/2724749/pexels-photo-2724749.jpeg?auto=compress&cs=tinysrgb&w=800'
-        ],
-        category: 'Cozinha',
-        completedAt: new Date('2024-01-15'),
-        duration: 12,
-        difficulty: 'hard',
-        clientTestimonial: 'Trabalho impecável! Superou todas as expectativas.',
-        tags: ['Cozinha Planejada', 'Alto Padrão', 'LED', 'Ilha Central']
-      },
-      {
-        id: '2',
-        title: 'Guarda-roupa Casal com Closet',
-        description: 'Montagem de guarda-roupa de 8 portas com closet integrado, sistema de gavetas telescópicas e espelhos bisotados.',
-        images: [
-          'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
-        ],
-        category: 'Quarto',
-        completedAt: new Date('2024-01-10'),
-        duration: 6,
-        difficulty: 'medium',
-        tags: ['Guarda-roupa', 'Closet', 'Espelhos']
-      }
-    ],
-    availability: [
-      { id: '1', dayOfWeek: 1, startTime: '08:00', endTime: '18:00', isAvailable: true, maxBookings: 2 },
-      { id: '2', dayOfWeek: 2, startTime: '08:00', endTime: '18:00', isAvailable: true, maxBookings: 2 },
-      { id: '3', dayOfWeek: 3, startTime: '08:00', endTime: '18:00', isAvailable: true, maxBookings: 2 },
-      { id: '4', dayOfWeek: 4, startTime: '08:00', endTime: '18:00', isAvailable: true, maxBookings: 2 },
-      { id: '5', dayOfWeek: 5, startTime: '08:00', endTime: '18:00', isAvailable: true, maxBookings: 2 },
-      { id: '6', dayOfWeek: 6, startTime: '08:00', endTime: '16:00', isAvailable: true, maxBookings: 1 }
-    ],
-    reviews: []
-  }
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useLocalStorage<User | null>('cc_user', null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = async (email: string, password: string, userType: 'client' | 'assembler') => {
-    setIsLoading(true);
-    try {
-      // Simulate API call with realistic delay
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      const foundUser = mockUsers.find(u => u.email === email && u.type === userType);
-      if (foundUser) {
-        const updatedUser = { ...foundUser, lastLoginAt: new Date() };
-        setUser(updatedUser);
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSupabaseUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
       } else {
-        throw new Error('Credenciais inválidas. Verifique email, senha e tipo de conta.');
+        setIsLoading(false);
       }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSupabaseUser(session?.user ?? null);
+      
+      if (session?.user) {
+        await fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const userProfile: User = {
+          id: data.id,
+          email: data.email,
+          name: data.name,
+          phone: data.phone,
+          type: data.type,
+          avatar: data.avatar_url,
+          isVerified: data.is_verified,
+          createdAt: new Date(data.created_at),
+          status: data.status
+        };
+        setUser(userProfile);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast.error('Erro ao carregar perfil do usuário');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-  };
-
-  const register = async (userData: Partial<User>) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        await fetchUserProfile(data.user.id);
+        toast.success('Login realizado com sucesso!');
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Erro ao fazer login');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       
-      const newUser: User = {
-        id: Date.now().toString(),
-        email: userData.email!,
-        name: userData.name!,
-        phone: userData.phone!,
-        type: userData.type!,
-        isVerified: false,
-        createdAt: new Date(),
-        status: 'active'
-      };
-      
-      setUser(newUser);
+      setUser(null);
+      setSupabaseUser(null);
+      toast.success('Logout realizado com sucesso!');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast.error('Erro ao fazer logout');
+    }
+  };
+
+  const register = async (userData: RegisterData) => {
+    setIsLoading(true);
+    try {
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Create user profile
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            email: userData.email,
+            name: userData.name,
+            phone: userData.phone,
+            type: userData.type,
+            is_verified: false,
+            status: 'active'
+          });
+
+        if (profileError) throw profileError;
+
+        toast.success('Conta criada com sucesso! Verifique seu email.');
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast.error(error.message || 'Erro ao criar conta');
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
   const updateProfile = async (userData: Partial<User>) => {
+    if (!user) return;
+
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      if (user) {
-        const updatedUser = { ...user, ...userData };
-        setUser(updatedUser);
-      }
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name: userData.name,
+          phone: userData.phone,
+          avatar_url: userData.avatar,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setUser({ ...user, ...userData });
+      toast.success('Perfil atualizado com sucesso!');
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      toast.error('Erro ao atualizar perfil');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -200,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{ 
       user, 
+      supabaseUser,
       login, 
       logout, 
       register, 
