@@ -51,11 +51,11 @@ export const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">C&C</span>
+                <img src="/images/logo.png" alt="Logo C&C Montagens" className="h-10 w-10" />
               </div>
               <div>
-                <span className="text-2xl font-bold text-gray-900">Montagens</span>
-                <div className="text-xs text-blue-600 font-medium">Conectando Profissionais</div>
+                <span className="text-2xl font-bold text-gray-900">Você escolher,</span>
+                <div className="text-xs text-blue-600 font-medium">agente monta.</div>
               </div>
             </div>
             <Button onClick={onGetStarted} rightIcon={<ArrowRight className="h-4 w-4" />}>
